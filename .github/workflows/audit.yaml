@@ -1,0 +1,19 @@
+name: Infrastructure Audit
+on: [push]
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Run Checkov Security Scan
+        id: checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          framework: terraform
+          # This tells Checkov to fail the build if any "High" or "Medium" risks are found
+          soft_fail: false 
+          output_format: cli
