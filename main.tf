@@ -3,17 +3,33 @@ provider "aws" {
 }
 
 resource "aws_s3_bucket" "insecure_bucket" {
-  bucket = "my-very-insecure-grc-test-bucket"
-  # GRC RISK: No encryption defined
-  # GRC RISK: No versioning defined
+  bucket = "grc-audit-test-bucket-2026-vivek" # Keep this unique
 }
 
-resource "aws_s3_bucket_public_access_block" "bad_idea" {
+# Fix CKV_AWS_21: Enable Versioning
+resource "aws_s3_bucket_versioning" "versioning" {
+  bucket = aws_s3_bucket.insecure_bucket.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+# Fix CKV_AWS_145: Enable Encryption (KMS)
+resource "aws_s3_bucket_server_side_encryption_configuration" "encryption" {
+  bucket = aws_s3_bucket.insecure_bucket.id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+# Fix CKV_AWS_53, 54, 55, 56: Block Public Access
+resource "aws_s3_bucket_public_access_block" "public_block" {
   bucket = aws_s3_bucket.insecure_bucket.id
 
-  # GRC RISK: Setting these to false allows public access!
-  block_public_acls       = false
-  block_public_policy     = false
-  ignore_public_acls      = false
-  restrict_public_buckets = false
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
 }
